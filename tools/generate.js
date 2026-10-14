@@ -1,4 +1,4 @@
-// Generates js/data.js with 100 word searches (50 English + 50 Greek)
+// Generates js/data.js with 200 word searches (100 English + 100 Greek)
 // and 100 sudoku puzzles. Run with: node tools/generate.js
 const fs = require('fs');
 const path = require('path');
@@ -80,9 +80,11 @@ function buildWordSearch(words, dirs, alpha, rand) {
 }
 
 const wordsearch = [];
-let seed = 1000;
-for (const lang of ['en', 'el']) {
-  for (const cat of W.categories) {
+let seed;
+for (const [li, lang] of ['en', 'el'].entries()) {
+  for (const [ci, cat] of W.categories.entries()) {
+    // Seeds keep the original 10 categories' puzzles unchanged when categories are added.
+    seed = ci < 10 ? 1000 + li * 60 + ci * 6 : 3000 + li * 1000 + ci * 6;
     const pool = shuffle([...new Set(W[lang][cat.id].map(norm))].filter((w) => w.length <= SIZE), rng(seed++));
     for (let i = 0; i < 5; i++) {
       const words = [];

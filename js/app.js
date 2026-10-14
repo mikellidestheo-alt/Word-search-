@@ -7,7 +7,7 @@
     en: {
       brand: 'Word Search & Sudoku',
       welcome: 'Welcome!',
-      intro: 'Choose a language, pick a category and start playing. 100 word searches and 100 sudoku puzzles.',
+      intro: 'Choose a language, pick a category and start playing. 100 word searches in each language and 100 sudoku puzzles.',
       chooseLang: 'Choose your version',
       enVersion: 'English version', elVersion: 'Greek version',
       wsCount: (n) => `${n} word searches`,
@@ -29,7 +29,7 @@
     el: {
       brand: 'Κρυπτόλεξα & Sudoku',
       welcome: 'Καλώς ήρθατε!',
-      intro: 'Διαλέξτε γλώσσα, μια κατηγορία και ξεκινήστε. 100 κρυπτόλεξα και 100 sudoku.',
+      intro: 'Διαλέξτε γλώσσα, μια κατηγορία και ξεκινήστε. 100 κρυπτόλεξα σε κάθε γλώσσα και 100 sudoku.',
       chooseLang: 'Διαλέξτε έκδοση',
       enVersion: 'Αγγλική έκδοση', elVersion: 'Ελληνική έκδοση',
       wsCount: (n) => `${n} κρυπτόλεξα`,
