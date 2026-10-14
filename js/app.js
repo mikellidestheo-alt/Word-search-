@@ -138,7 +138,10 @@
       <h1>${c.icon} ${esc(catName(c))} — ${t().puzzle} ${n}</h1>
       <p class="sub">${t().wsHelp}</p>
       <div class="ws-layout">
-        <div class="ws-grid" id="grid">${cells.join('')}</div>
+        <div class="ws-board">
+          <svg class="ws-lines" id="lines" viewBox="0 0 ${size} ${size}" aria-hidden="true"></svg>
+          <div class="ws-grid" id="grid">${cells.join('')}</div>
+        </div>
         <div class="ws-side">
           <ul class="ws-words" id="words">${p.words.map((w, i) => `<li data-i="${i}">${esc(w)}</li>`).join('')}</ul>
           <div class="status" id="status"></div>
@@ -161,18 +164,16 @@
     const straight = (a, b) => a[0] === b[0] || a[1] === b[1] || Math.abs(a[0] - b[0]) === Math.abs(a[1] - b[1]);
 
     function paintFound() {
-      grid.querySelectorAll('.ws-cell').forEach((el) => { el.classList.remove('found'); el.style.background = ''; });
+      // Found words are drawn as translucent strokes so crossing words stay visible.
+      let lines = '';
       p.words.forEach((w, i) => {
         const li = document.querySelector(`#words li[data-i="${i}"]`);
         li.classList.toggle('found', found.has(i));
         if (!found.has(i)) return;
         const [r1, c1, r2, c2] = p.pos[i];
-        lineCells(r1, c1, r2, c2).forEach(([r, col]) => {
-          const el = cellEl(r, col);
-          el.classList.add('found');
-          el.style.background = COLORS[i % COLORS.length];
-        });
+        lines += `<line x1="${c1 + 0.5}" y1="${r1 + 0.5}" x2="${c2 + 0.5}" y2="${r2 + 0.5}" stroke="${COLORS[i % COLORS.length]}" />`;
       });
+      document.getElementById('lines').innerHTML = lines;
       const st = document.getElementById('status');
       if (found.size === p.words.length) {
         st.textContent = t().wsWin; st.className = 'status win';

@@ -44,16 +44,18 @@ h2 { font-size: 1.2rem; margin: 28px 0 10px; }
 
 /* Word search */
 .ws-layout { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.ws-board { position: relative; width: min(100%, 520px); }
+.ws-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.ws-lines line { stroke-width: .72; stroke-linecap: round; stroke-opacity: .55; }
 .ws-grid {
-  display: grid; grid-template-columns: repeat(12, 1fr); width: min(100%, 520px);
-  border: 1px solid #ddd; border-radius: 8px; user-select: none; touch-action: none; overflow: hidden;
+  position: relative; display: grid; grid-template-columns: repeat(12, 1fr); width: 100%;
+  border: 1px solid #ddd; border-radius: 8px; user-select: none; touch-action: none;
 }
 .ws-cell {
   aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
   font-weight: 600; font-size: clamp(.8rem, 3.6vw, 1.25rem); cursor: pointer;
 }
-.ws-cell.sel { background: #ffe58a; }
-.ws-cell.found { color: #fff; }
+.ws-cell.sel { background: rgba(255, 213, 79, .6); border-radius: 50%; }
 .ws-side { flex: 1 1 340px; min-width: 0; }
 .ws-words { list-style: none; padding: 0; margin: 0; columns: 3; column-gap: 12px; }
 .ws-words li { padding: 4px 0; font-weight: 600; font-size: .9rem; letter-spacing: .3px; overflow-wrap: anywhere; }

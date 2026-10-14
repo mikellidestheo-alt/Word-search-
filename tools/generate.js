@@ -43,38 +43,70 @@ function countOccurrences(grid, word) {
   return n;
 }
 
+const isDiag = ([dr, dc]) => dr !== 0 && dc !== 0;
+const MIN_DIAGONAL = 5; // words placed diagonally in every puzzle
+const MIN_DIAGONAL_CROSSING = 3; // diagonal words that share a letter with another word
+const MIN_CROSSING = 7; // words that share a letter with another word
+
+// Every valid placement of word w in the grid using the given directions, with
+// the number of letters it would share with words already placed.
+function placements(grid, w, dirs) {
+  const out = [];
+  for (const [dr, dc] of dirs) for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+    const er = r + dr * (w.length - 1), ec = c + dc * (w.length - 1);
+    if (er < 0 || ec < 0 || er >= SIZE || ec >= SIZE) continue;
+    let shared = 0, fits = true;
+    for (let k = 0; k < w.length && fits; k++) {
+      const ch = grid[r + dr * k][c + dc * k];
+      if (ch === w[k]) shared++;
+      else if (ch !== null) fits = false;
+    }
+    // Sharing every letter would hide the word inside another one.
+    if (fits && shared < w.length) out.push({ r, c, dr, dc, er, ec, shared });
+  }
+  return out;
+}
+
 function buildWordSearch(words, dirs, alpha, rand) {
-  for (let attempt = 0; attempt < 200; attempt++) {
+  const diagDirs = dirs.filter(isDiag), straightDirs = dirs.filter((d) => !isDiag(d));
+  const pick = (a) => a[Math.floor(rand() * a.length)];
+  for (let attempt = 0; attempt < 500; attempt++) {
     const grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+    // Reserve some words (preferring ones short enough to fit diagonally with room) for diagonals.
+    const diagWords = new Set(shuffle(words.filter((w) => w.length <= 10), rand).slice(0, MIN_DIAGONAL + 1));
     const placed = [];
     let ok = true;
     for (const w of [...words].sort((a, b) => b.length - a.length)) {
-      let done = false;
-      for (let t = 0; t < 400 && !done; t++) {
-        const [dr, dc] = dirs[Math.floor(rand() * dirs.length)];
-        const r = Math.floor(rand() * SIZE), c = Math.floor(rand() * SIZE);
-        const er = r + dr * (w.length - 1), ec = c + dc * (w.length - 1);
-        if (er < 0 || ec < 0 || er >= SIZE || ec >= SIZE) continue;
-        let fits = true;
-        for (let k = 0; k < w.length; k++) {
-          const ch = grid[r + dr * k][c + dc * k];
-          if (ch !== null && ch !== w[k]) { fits = false; break; }
-        }
-        if (!fits) continue;
-        for (let k = 0; k < w.length; k++) grid[r + dr * k][c + dc * k] = w[k];
-        placed.push({ w, pos: [r, c, er, ec] });
-        done = true;
-      }
-      if (!done) { ok = false; break; }
+      let opts = placements(grid, w, diagWords.has(w) ? diagDirs : straightDirs);
+      if (!opts.length) opts = placements(grid, w, dirs);
+      if (!opts.length) { ok = false; break; }
+      // Usually choose a spot that interlinks with an existing word.
+      const linked = opts.filter((o) => o.shared > 0);
+      const o = linked.length && rand() < 0.7 ? pick(linked) : pick(opts);
+      for (let k = 0; k < w.length; k++) grid[o.r + o.dr * k][o.c + o.dc * k] = w[k];
+      placed.push({ w, pos: [o.r, o.c, o.er, o.ec], diag: isDiag([o.dr, o.dc]) });
     }
     if (!ok) continue;
-    for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++)
-      if (grid[r][c] === null) grid[r][c] = alpha[Math.floor(rand() * alpha.length)];
-    // Each word (and its reverse, for palindrome-free uniqueness) must appear exactly once.
-    if (placed.every((p) => countOccurrences(grid, p.w) === (p.w === [...p.w].reverse().join('') ? 2 : 1))) {
-      const order = new Map(words.map((w, i) => [w, i]));
-      placed.sort((a, b) => order.get(a.w) - order.get(b.w));
-      return { grid: grid.map((row) => row.join('')), words: placed.map((p) => p.w), pos: placed.map((p) => p.pos) };
+
+    const cellsOf = ([r1, c1, r2, c2]) => {
+      const dr = Math.sign(r2 - r1), dc = Math.sign(c2 - c1), n = Math.max(Math.abs(r2 - r1), Math.abs(c2 - c1));
+      return [...Array(n + 1).keys()].map((k) => (r1 + dr * k) * SIZE + c1 + dc * k);
+    };
+    const use = new Map();
+    placed.forEach((p) => cellsOf(p.pos).forEach((x) => use.set(x, (use.get(x) || 0) + 1)));
+    const crossing = placed.filter((p) => cellsOf(p.pos).some((x) => use.get(x) > 1));
+    if (placed.filter((p) => p.diag).length < MIN_DIAGONAL) continue;
+    if (crossing.filter((p) => p.diag).length < MIN_DIAGONAL_CROSSING) continue;
+    if (crossing.length < MIN_CROSSING) continue;
+
+    for (let fill = 0; fill < 20; fill++) {
+      const g = grid.map((row) => row.map((ch) => ch || alpha[Math.floor(rand() * alpha.length)]));
+      // Each word must appear exactly once (palindromes are seen twice, once per direction).
+      if (placed.every((p) => countOccurrences(g, p.w) === (p.w === [...p.w].reverse().join('') ? 2 : 1))) {
+        const order = new Map(words.map((w, i) => [w, i]));
+        placed.sort((a, b) => order.get(a.w) - order.get(b.w));
+        return { grid: g.map((row) => row.join('')), words: placed.map((p) => p.w), pos: placed.map((p) => p.pos) };
+      }
     }
   }
   throw new Error('Could not build word search for ' + words.join(','));
