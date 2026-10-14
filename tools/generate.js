@@ -33,20 +33,21 @@ const ALL_DIRS = [E, S, SE, NE, W_, N, NW, SW];
 //   size: grid width/height       words: words to find      dirs: allowed directions
 //   decoys: partial "near-miss" copies of words hidden in the grid
 //   tricky: filler letters drawn mostly from the puzzle's own words
+//   adv: how many words come from the advanced (longer, less common) vocabulary
 const LEVELS = {
   en: [
     { size: 12, words: 15, dirs: [E, S, SE], decoys: 0, tricky: false },
     { size: 12, words: 15, dirs: [E, S, SE, NE], decoys: 2, tricky: false },
-    { size: 12, words: 15, dirs: [E, S, SE, NE, W_], decoys: 4, tricky: false },
-    { size: 13, words: 15, dirs: [E, S, SE, NE, W_, N], decoys: 6, tricky: true },
-    { size: 14, words: 15, dirs: ALL_DIRS, decoys: 8, tricky: true },
+    { size: 12, words: 15, adv: 4, dirs: [E, S, SE, NE, W_], decoys: 4, tricky: false },
+    { size: 13, words: 15, adv: 8, dirs: [E, S, SE, NE, W_, N], decoys: 6, tricky: true },
+    { size: 14, words: 15, adv: 15, dirs: ALL_DIRS, decoys: 8, tricky: true },
   ],
   el: [
     { size: 12, words: 15, dirs: [E, S, SE, NE], decoys: 2, tricky: false },
     { size: 13, words: 15, dirs: [E, S, SE, NE, W_, N], decoys: 4, tricky: false },
-    { size: 13, words: 16, dirs: ALL_DIRS, decoys: 6, tricky: true },
-    { size: 14, words: 17, dirs: ALL_DIRS, decoys: 9, tricky: true },
-    { size: 15, words: 18, dirs: ALL_DIRS, decoys: 12, tricky: true },
+    { size: 13, words: 16, adv: 5, dirs: ALL_DIRS, decoys: 6, tricky: true },
+    { size: 14, words: 17, adv: 10, dirs: ALL_DIRS, decoys: 9, tricky: true },
+    { size: 15, words: 18, adv: 18, dirs: ALL_DIRS, decoys: 12, tricky: true },
   ],
 };
 const isDiag = ([dr, dc]) => dr !== 0 && dc !== 0;
@@ -158,15 +159,21 @@ for (const [li, lang] of ['en', 'el'].entries()) {
   for (const [ci, cat] of W.categories.entries()) {
     seed = ci < 10 ? 1000 + li * 60 + ci * 6 : 3000 + li * 1000 + ci * 6;
     const pool = shuffle([...new Set(W[lang][cat.id].map(norm))].filter((w) => w.length <= 12), rng(seed++));
+    const advPool = shuffle([...new Set(W.adv[lang][cat.id].map(norm))], rng(seed + 7000));
     for (let i = 0; i < 5; i++) {
       const L = LEVELS[lang][i];
       const words = [];
       const rev = (w) => [...w].reverse().join('');
       const clash = (a, b) => a.includes(b) || b.includes(a) || a.includes(rev(b)) || b.includes(rev(a));
-      for (let k = 0; words.length < L.words; k++) {
-        const w = pool[(i * 6 + k) % pool.length];
-        if (w.length <= L.size && !words.some((x) => clash(x, w))) words.push(w);
-      }
+      const take = (src, offset, count) => {
+        for (let k = 0, added = 0; added < count && k < src.length * 2; k++) {
+          const w = src[(offset + k) % src.length];
+          if (w.length <= L.size && !words.some((x) => clash(x, w))) { words.push(w); added++; }
+        }
+      };
+      take(pool, i * 6, L.words - (L.adv || 0));
+      take(advPool, i === 4 ? 0 : (i - 2) * 7, L.words - words.length);
+      if (words.length < L.words) take(pool, i * 6, L.words - words.length);
       const p = buildWordSearch(words, L, ALPHA[lang], rng(seed++));
       wordsearch.push({ id: `${lang}-${cat.id}-${i + 1}`, lang, cat: cat.id, n: i + 1, ...p });
     }

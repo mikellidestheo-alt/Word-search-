@@ -64,6 +64,10 @@ h1 .level { font-size: .9rem; font-weight: 600; color: #2f6fed; border: 1px soli
 .ws-side { flex: 1 1 320px; min-width: 0; max-width: 560px; }
 .ws-words { list-style: none; padding: 0; margin: 0; columns: 3; column-gap: 12px; }
 .ws-words li { padding: 4px 0; font-weight: 600; font-size: .9rem; letter-spacing: .3px; overflow-wrap: anywhere; }
+/* Puzzles with long words: list goes under the grid so words fit on one line. */
+.ws-layout.long .ws-side { flex-basis: 100%; max-width: none; }
+.ws-layout.long .ws-words { max-width: 760px; }
+@media (max-width: 600px) { .ws-layout.long .ws-words { columns: 2; } }
 .ws-words li.found { text-decoration: line-through; color: #aaa; }
 .status { margin: 12px 0; font-weight: 600; min-height: 1.4em; }
 .status.win { color: #23784b; }

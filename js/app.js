@@ -68,7 +68,16 @@
   const done = store.get('done', {});
   const markDone = (id) => { done[id] = true; store.set('done', done); };
   const t = () => T[lang];
-  const wsSolved = (p) => store.get('ws-' + p.id, []).length >= p.words.length;
+  // Found words are saved as the words themselves ('wsf-'), so progress survives
+  // changes to a puzzle's word list. Older saves stored list positions ('ws-');
+  // those are only still valid for puzzles 1-2, whose word lists never changed.
+  function wsFound(p) {
+    const saved = store.get('wsf-' + p.id, null);
+    if (saved) return new Set(saved.filter((w) => p.words.includes(w)));
+    const old = p.n <= 2 ? store.get('ws-' + p.id, []) : [];
+    return new Set(old.map((i) => p.words[i]).filter(Boolean));
+  }
+  const wsSolved = (p) => wsFound(p).size >= p.words.length;
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const catName = (c) => c[lang];
@@ -135,19 +144,21 @@
     const p = wsList(catId).find((x) => x.n === n);
     if (!c || !p) return homePage();
     const size = p.grid.length;
-    const key = 'ws-' + p.id;
-    const found = new Set(store.get(key, []));
+    const key = 'wsf-' + p.id;
+    const found = new Set([...wsFound(p)].map((w) => p.words.indexOf(w)));
+    const save = () => store.set(key, [...found].map((i) => p.words[i]));
 
     const cells = [];
     for (let r = 0; r < size; r++) for (let col = 0; col < size; col++)
       cells.push(`<div class="ws-cell" data-r="${r}" data-c="${col}">${p.grid[r][col]}</div>`);
     const nextN = n < 5 ? n + 1 : null;
+    const longWords = Math.max(...p.words.map((w) => w.length)) > 10;
     const backwards = p.pos.some(([r1, c1, r2, c2]) => c2 < c1 || (c2 === c1 && r2 < r1));
 
     app.innerHTML = crumbs([[t().home, '#/'], [catName(c), '#/ws/' + catId], [`${t().puzzle} ${n}`]]) + `
       <h1>${c.icon} ${esc(catName(c))} — ${t().puzzle} ${n} <span class="level">${t().wsLevels[n - 1]}</span></h1>
       <p class="sub">${backwards ? t().dirsBack : t().dirsBasic} ${t().wsHelp}</p>
-      <div class="ws-layout">
+      <div class="ws-layout${longWords ? ' long' : ''}">
         <div class="ws-board" style="--n:${size}">
           <svg class="ws-lines" id="lines" viewBox="0 0 ${size} ${size}" aria-hidden="true"></svg>
           <div class="ws-grid" id="grid">${cells.join('')}</div>
@@ -209,7 +220,7 @@
         (r2 === start[0] && c2 === start[1] && r1 === end[0] && c1 === end[1]));
       if (i >= 0 && !found.has(i)) {
         found.add(i);
-        store.set(key, [...found]);
+        save();
       }
     }
     grid.addEventListener('pointerdown', (e) => {
@@ -244,7 +255,7 @@
     });
     document.getElementById('restart').addEventListener('click', () => {
       if (!confirm(t().confirmRestart)) return;
-      found.clear(); store.del(key); paintFound();
+      found.clear(); save(); paintFound();
     });
     paintFound();
   }
