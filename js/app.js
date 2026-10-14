@@ -25,6 +25,10 @@
       wsHelp: 'Drag across letters (or tap the first and last letter) to select a word.',
       sdHelp: 'Select a cell, then type or tap a number.',
       confirmRestart: 'Restart this puzzle?',
+      wsLevels: ['Easy', 'Fairly easy', 'Medium', 'Hard', 'Very hard'],
+      dirsBasic: 'Words go across, down and diagonally.',
+      dirsBack: 'Words go in every direction — also backwards and upwards.',
+      ladder: 'Puzzles get harder from 1 to 5.',
     },
     el: {
       brand: 'Κρυπτόλεξα & Sudoku',
@@ -47,6 +51,10 @@
       wsHelp: 'Σύρετε πάνω στα γράμματα (ή πατήστε το πρώτο και το τελευταίο γράμμα) για να επιλέξετε λέξη.',
       sdHelp: 'Επιλέξτε ένα κελί και πληκτρολογήστε ή πατήστε έναν αριθμό.',
       confirmRestart: 'Να ξεκινήσει ο γρίφος από την αρχή;',
+      wsLevels: ['Εύκολο', 'Σχετικά εύκολο', 'Μέτριο', 'Δύσκολο', 'Πολύ δύσκολο'],
+      dirsBasic: 'Οι λέξεις είναι οριζόντια, κάθετα και διαγώνια.',
+      dirsBack: 'Οι λέξεις είναι προς κάθε κατεύθυνση — και ανάποδα ή προς τα πάνω.',
+      ladder: 'Οι γρίφοι γίνονται πιο δύσκολοι από το 1 έως το 5.',
     },
   };
 
@@ -60,6 +68,7 @@
   const done = store.get('done', {});
   const markDone = (id) => { done[id] = true; store.set('done', done); };
   const t = () => T[lang];
+  const wsSolved = (p) => store.get('ws-' + p.id, []).length >= p.words.length;
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const catName = (c) => c[lang];
@@ -79,7 +88,7 @@
   function homePage() {
     const cards = DATA.categories.map((c) => {
       const list = wsList(c.id);
-      const d = list.filter((p) => done[p.id]).length;
+      const d = list.filter(wsSolved).length;
       return `<a class="card${d === list.length ? ' done' : ''}" href="#/ws/${c.id}">
         <span class="icon">${c.icon}</span><span class="title">${esc(catName(c))}</span>
         <span class="meta">${t().puzzles(d, list.length)}</span></a>`;
@@ -114,9 +123,9 @@
     const c = DATA.categories.find((x) => x.id === catId);
     if (!c) return homePage();
     const tiles = wsList(catId).map((p) =>
-      `<a class="tile${done[p.id] ? ' done' : ''}" href="#/ws/${catId}/${p.n}">${p.n}</a>`).join('');
+      `<a class="tile wide${wsSolved(p) ? ' done' : ''}" href="#/ws/${catId}/${p.n}">${p.n}<small>${t().wsLevels[p.n - 1]}</small></a>`).join('');
     app.innerHTML = crumbs([[t().home, '#/'], [catName(c)]]) +
-      `<h1>${c.icon} ${esc(catName(c))}</h1><p class="sub">${t().wsHelp}</p><div class="tiles">${tiles}</div>`;
+      `<h1>${c.icon} ${esc(catName(c))}</h1><p class="sub">${t().ladder}</p><div class="tiles wide">${tiles}</div>`;
   }
 
   const COLORS = ['#e57373', '#64b5f6', '#81c784', '#ffb74d', '#ba68c8', '#4db6ac', '#f06292', '#7986cb', '#a1887f', '#90a4ae'];
@@ -133,12 +142,13 @@
     for (let r = 0; r < size; r++) for (let col = 0; col < size; col++)
       cells.push(`<div class="ws-cell" data-r="${r}" data-c="${col}">${p.grid[r][col]}</div>`);
     const nextN = n < 5 ? n + 1 : null;
+    const backwards = p.pos.some(([r1, c1, r2, c2]) => c2 < c1 || (c2 === c1 && r2 < r1));
 
     app.innerHTML = crumbs([[t().home, '#/'], [catName(c), '#/ws/' + catId], [`${t().puzzle} ${n}`]]) + `
-      <h1>${c.icon} ${esc(catName(c))} — ${t().puzzle} ${n}</h1>
-      <p class="sub">${t().wsHelp}</p>
+      <h1>${c.icon} ${esc(catName(c))} — ${t().puzzle} ${n} <span class="level">${t().wsLevels[n - 1]}</span></h1>
+      <p class="sub">${backwards ? t().dirsBack : t().dirsBasic} ${t().wsHelp}</p>
       <div class="ws-layout">
-        <div class="ws-board">
+        <div class="ws-board" style="--n:${size}">
           <svg class="ws-lines" id="lines" viewBox="0 0 ${size} ${size}" aria-hidden="true"></svg>
           <div class="ws-grid" id="grid">${cells.join('')}</div>
         </div>

@@ -14,7 +14,7 @@ button { font: inherit; cursor: pointer; }
 }
 .lang-switch button.active { background: #2f6fed; border-color: #2f6fed; color: #fff; }
 
-main { max-width: 960px; margin: 0 auto; padding: 16px; }
+main { max-width: 1040px; margin: 0 auto; padding: 16px; }
 h1 { font-size: 1.6rem; margin: 8px 0 4px; }
 h2 { font-size: 1.2rem; margin: 28px 0 10px; }
 .sub { color: #666; margin: 0 0 12px; }
@@ -40,23 +40,28 @@ h2 { font-size: 1.2rem; margin: 28px 0 10px; }
   border: 1px solid #ddd; border-radius: 8px; padding: 12px 0; text-align: center; font-weight: 600;
 }
 .tile:hover { border-color: #2f6fed; }
+.tiles.wide { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.tile.wide { display: flex; flex-direction: column; gap: 2px; font-size: 1.3rem; }
+.tile.wide small { font-size: .8rem; font-weight: 500; color: #666; }
+.tile.done small { color: #23784b; }
+h1 .level { font-size: .9rem; font-weight: 600; color: #2f6fed; border: 1px solid #2f6fed; border-radius: 999px; padding: 2px 10px; vertical-align: middle; white-space: nowrap; }
 .tile.done { background: #e9f7ef; border-color: #3aa76d; color: #23784b; }
 
 /* Word search */
 .ws-layout { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
-.ws-board { position: relative; width: min(100%, 520px); }
+.ws-board { position: relative; width: min(100%, calc(var(--n) * 42px)); }
 .ws-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .ws-lines line { stroke-width: .72; stroke-linecap: round; stroke-opacity: .55; }
 .ws-grid {
-  position: relative; display: grid; grid-template-columns: repeat(12, 1fr); width: 100%;
+  position: relative; display: grid; grid-template-columns: repeat(var(--n), 1fr); width: 100%;
   border: 1px solid #ddd; border-radius: 8px; user-select: none; touch-action: none;
 }
 .ws-cell {
   aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
-  font-weight: 600; font-size: clamp(.8rem, 3.6vw, 1.25rem); cursor: pointer;
+  font-weight: 600; font-size: clamp(.8rem, calc(44vw / var(--n)), 1.3rem); cursor: pointer;
 }
 .ws-cell.sel { background: rgba(255, 213, 79, .6); border-radius: 50%; }
-.ws-side { flex: 1 1 340px; min-width: 0; }
+.ws-side { flex: 1 1 320px; min-width: 0; max-width: 560px; }
 .ws-words { list-style: none; padding: 0; margin: 0; columns: 3; column-gap: 12px; }
 .ws-words li { padding: 4px 0; font-weight: 600; font-size: .9rem; letter-spacing: .3px; overflow-wrap: anywhere; }
 .ws-words li.found { text-decoration: line-through; color: #aaa; }
