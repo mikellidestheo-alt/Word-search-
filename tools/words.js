@@ -1,0 +1,40 @@
+// Word pools for each category, per language.
+// Each category produces 5 puzzles of 10 words; words longer than 12 letters are skipped.
+module.exports = {
+  categories: [
+    { id: 'travel', en: 'Travel', el: 'Ταξίδια', icon: '✈️' },
+    { id: 'home', en: 'Home', el: 'Σπίτι', icon: '🏠' },
+    { id: 'food', en: 'Food', el: 'Φαγητό', icon: '🍎' },
+    { id: 'animals', en: 'Animals', el: 'Ζώα', icon: '🐶' },
+    { id: 'nature', en: 'Nature', el: 'Φύση', icon: '🌳' },
+    { id: 'sports', en: 'Sports', el: 'Αθλήματα', icon: '⚽' },
+    { id: 'school', en: 'School', el: 'Σχολείο', icon: '📚' },
+    { id: 'body', en: 'Body', el: 'Σώμα', icon: '💪' },
+    { id: 'clothes', en: 'Clothes', el: 'Ρούχα', icon: '👕' },
+    { id: 'jobs', en: 'Jobs', el: 'Επαγγέλματα', icon: '👩‍⚕️' },
+  ],
+  en: {
+    travel: ['PASSPORT', 'TICKET', 'AIRPORT', 'HOTEL', 'LUGGAGE', 'SUITCASE', 'BEACH', 'MAP', 'TRAIN', 'FLIGHT', 'CRUISE', 'TOURIST', 'VISA', 'CAMERA', 'JOURNEY', 'ISLAND', 'MUSEUM', 'BORDER', 'HOSTEL', 'CAMPING', 'COMPASS', 'GUIDE', 'BOOKING', 'SOUVENIR', 'TAXI', 'HARBOR', 'PILOT', 'BACKPACK', 'VACATION', 'RESORT'],
+    home: ['KITCHEN', 'BEDROOM', 'SOFA', 'TABLE', 'CHAIR', 'WINDOW', 'DOOR', 'ROOF', 'GARDEN', 'BATHROOM', 'SHOWER', 'PILLOW', 'BLANKET', 'LAMP', 'CARPET', 'MIRROR', 'CURTAIN', 'OVEN', 'FRIDGE', 'STAIRS', 'BALCONY', 'GARAGE', 'CLOSET', 'SHELF', 'CANDLE', 'TOWEL', 'KETTLE', 'FENCE', 'CEILING', 'HALLWAY'],
+    food: ['BREAD', 'CHEESE', 'APPLE', 'BANANA', 'PASTA', 'PIZZA', 'SALAD', 'SOUP', 'TOMATO', 'POTATO', 'CHICKEN', 'RICE', 'BUTTER', 'HONEY', 'ORANGE', 'CARROT', 'ONION', 'GARLIC', 'YOGURT', 'COOKIE', 'OLIVE', 'LEMON', 'GRAPES', 'CHERRY', 'PEPPER', 'SUGAR', 'CAKE', 'SANDWICH', 'MUSHROOM', 'NOODLES'],
+    animals: ['ELEPHANT', 'TIGER', 'LION', 'GIRAFFE', 'ZEBRA', 'MONKEY', 'DOLPHIN', 'WHALE', 'RABBIT', 'TURTLE', 'PENGUIN', 'HORSE', 'DONKEY', 'SHEEP', 'GOAT', 'EAGLE', 'OWL', 'PARROT', 'SNAKE', 'FROG', 'BEAR', 'WOLF', 'FOX', 'DEER', 'CAMEL', 'KANGAROO', 'SQUIRREL', 'OCTOPUS', 'SHARK', 'BUTTERFLY'],
+    nature: ['FOREST', 'RIVER', 'MOUNTAIN', 'OCEAN', 'FLOWER', 'TREE', 'CLOUD', 'RAIN', 'SUNSHINE', 'VALLEY', 'DESERT', 'LAKE', 'STONE', 'LEAF', 'GRASS', 'WIND', 'STORM', 'SNOW', 'RAINBOW', 'VOLCANO', 'WATERFALL', 'MEADOW', 'CAVE', 'CLIFF', 'SEED', 'ROOT', 'BRANCH', 'MOON', 'STAR', 'SUNSET'],
+    sports: ['FOOTBALL', 'TENNIS', 'SOCCER', 'BASEBALL', 'HOCKEY', 'GOLF', 'RUGBY', 'BOXING', 'CYCLING', 'SWIMMING', 'SKIING', 'KARATE', 'SURFING', 'ROWING', 'SAILING', 'VOLLEYBALL', 'CRICKET', 'RUNNING', 'DIVING', 'ARCHERY', 'FENCING', 'JUDO', 'BOWLING', 'SKATING', 'CLIMBING', 'GOAL', 'REFEREE', 'TROPHY', 'STADIUM', 'MEDAL'],
+    school: ['TEACHER', 'STUDENT', 'PENCIL', 'ERASER', 'NOTEBOOK', 'RULER', 'LIBRARY', 'LESSON', 'HOMEWORK', 'EXAM', 'CLASSROOM', 'DESK', 'BOARD', 'CHALK', 'SCIENCE', 'HISTORY', 'MATH', 'MUSIC', 'ART', 'GRADE', 'RECESS', 'SCHOOLBAG', 'CRAYON', 'PAPER', 'SCISSORS', 'GLUE', 'MARKER', 'QUIZ', 'TEXTBOOK', 'PRINCIPAL'],
+    body: ['HEAD', 'SHOULDER', 'KNEE', 'ELBOW', 'FINGER', 'THUMB', 'ANKLE', 'HEART', 'BRAIN', 'STOMACH', 'MOUTH', 'TEETH', 'TONGUE', 'NOSE', 'EAR', 'EYE', 'CHIN', 'CHEEK', 'NECK', 'BACK', 'LEG', 'FOOT', 'HAND', 'WRIST', 'HIP', 'LUNGS', 'SKIN', 'BONE', 'MUSCLE', 'EYEBROW'],
+    clothes: ['SHIRT', 'TROUSERS', 'DRESS', 'SKIRT', 'JACKET', 'COAT', 'SWEATER', 'SCARF', 'GLOVES', 'HAT', 'SOCKS', 'SHOES', 'BOOTS', 'SANDALS', 'BELT', 'TIE', 'JEANS', 'SHORTS', 'PAJAMAS', 'HOODIE', 'BLOUSE', 'VEST', 'CAP', 'UNIFORM', 'RAINCOAT', 'SLIPPERS', 'SNEAKERS', 'SUIT', 'POCKET', 'BUTTON'],
+    jobs: ['DOCTOR', 'NURSE', 'TEACHER', 'FARMER', 'BAKER', 'CHEF', 'PILOT', 'DENTIST', 'LAWYER', 'ENGINEER', 'ARTIST', 'SINGER', 'ACTOR', 'WAITER', 'DRIVER', 'PAINTER', 'PLUMBER', 'BUTCHER', 'SAILOR', 'SOLDIER', 'POLICE', 'FIREFIGHTER', 'MECHANIC', 'BANKER', 'WRITER', 'DANCER', 'JUDGE', 'CASHIER', 'TAILOR', 'GARDENER'],
+  },
+  el: {
+    travel: ['Διαβατήριο', 'Εισιτήριο', 'Αεροδρόμιο', 'Ξενοδοχείο', 'Βαλίτσα', 'Παραλία', 'Χάρτης', 'Τρένο', 'Πτήση', 'Κρουαζιέρα', 'Τουρίστας', 'Βίζα', 'Κάμερα', 'Ταξίδι', 'Νησί', 'Μουσείο', 'Σύνορα', 'Πυξίδα', 'Ξεναγός', 'Κράτηση', 'Ταξί', 'Λιμάνι', 'Πιλότος', 'Σακίδιο', 'Διακοπές', 'Θέρετρο', 'Αεροπλάνο', 'Πλοίο', 'Λεωφορείο', 'Ήλιος'],
+    home: ['Κουζίνα', 'Κρεβάτι', 'Καναπές', 'Τραπέζι', 'Καρέκλα', 'Παράθυρο', 'Πόρτα', 'Στέγη', 'Κήπος', 'Μπάνιο', 'Ντουζιέρα', 'Μαξιλάρι', 'Κουβέρτα', 'Λάμπα', 'Χαλί', 'Καθρέφτης', 'Κουρτίνα', 'Φούρνος', 'Ψυγείο', 'Σκάλα', 'Μπαλκόνι', 'Γκαράζ', 'Ντουλάπα', 'Ράφι', 'Κερί', 'Πετσέτα', 'Βραστήρας', 'Φράχτης', 'Ταβάνι', 'Διάδρομος'],
+    food: ['Ψωμί', 'Τυρί', 'Μήλο', 'Μπανάνα', 'Μακαρόνια', 'Πίτσα', 'Σαλάτα', 'Σούπα', 'Ντομάτα', 'Πατάτα', 'Κοτόπουλο', 'Ρύζι', 'Βούτυρο', 'Μέλι', 'Πορτοκάλι', 'Καρότο', 'Κρεμμύδι', 'Σκόρδο', 'Γιαούρτι', 'Μπισκότο', 'Ελιά', 'Λεμόνι', 'Σταφύλι', 'Κεράσι', 'Πιπέρι', 'Ζάχαρη', 'Κέικ', 'Σάντουιτς', 'Μανιτάρι', 'Φακές'],
+    animals: ['Ελέφαντας', 'Τίγρης', 'Λιοντάρι', 'Καμηλοπάρδαλη', 'Ζέβρα', 'Μαϊμού', 'Δελφίνι', 'Φάλαινα', 'Κουνέλι', 'Χελώνα', 'Πιγκουίνος', 'Άλογο', 'Γάιδαρος', 'Πρόβατο', 'Κατσίκα', 'Αετός', 'Κουκουβάγια', 'Παπαγάλος', 'Φίδι', 'Βάτραχος', 'Αρκούδα', 'Λύκος', 'Αλεπού', 'Ελάφι', 'Καμήλα', 'Καγκουρό', 'Σκίουρος', 'Χταπόδι', 'Καρχαρίας', 'Πεταλούδα'],
+    nature: ['Δάσος', 'Ποτάμι', 'Βουνό', 'Ωκεανός', 'Λουλούδι', 'Δέντρο', 'Σύννεφο', 'Βροχή', 'Λιακάδα', 'Κοιλάδα', 'Έρημος', 'Λίμνη', 'Πέτρα', 'Φύλλο', 'Χορτάρι', 'Άνεμος', 'Καταιγίδα', 'Χιόνι', 'Ουράνιο', 'Ηφαίστειο', 'Καταρράκτης', 'Λιβάδι', 'Σπηλιά', 'Γκρεμός', 'Σπόρος', 'Ρίζα', 'Κλαδί', 'Φεγγάρι', 'Αστέρι', 'Θάλασσα'],
+    sports: ['Ποδόσφαιρο', 'Τένις', 'Μπάσκετ', 'Χόκεϊ', 'Γκολφ', 'Ράγκμπι', 'Πυγμαχία', 'Ποδηλασία', 'Κολύμβηση', 'Σκι', 'Καράτε', 'Σέρφινγκ', 'Κωπηλασία', 'Ιστιοπλοΐα', 'Βόλεϊ', 'Τρέξιμο', 'Κατάδυση', 'Τοξοβολία', 'Ξιφασκία', 'Τζούντο', 'Μπόουλινγκ', 'Πατινάζ', 'Αναρρίχηση', 'Γκολ', 'Διαιτητής', 'Τρόπαιο', 'Γήπεδο', 'Μετάλλιο', 'Ομάδα', 'Πάλη'],
+    school: ['Δάσκαλος', 'Μαθητής', 'Μολύβι', 'Γόμα', 'Τετράδιο', 'Χάρακας', 'Βιβλιοθήκη', 'Μάθημα', 'Εργασία', 'Εξετάσεις', 'Τάξη', 'Θρανίο', 'Πίνακας', 'Κιμωλία', 'Φυσική', 'Ιστορία', 'Μαθηματικά', 'Μουσική', 'Τέχνη', 'Βαθμός', 'Διάλειμμα', 'Τσάντα', 'Κηρομπογιά', 'Χαρτί', 'Ψαλίδι', 'Κόλλα', 'Μαρκαδόρος', 'Κουίζ', 'Βιβλίο', 'Διευθυντής'],
+    body: ['Κεφάλι', 'Ώμος', 'Γόνατο', 'Αγκώνας', 'Δάχτυλο', 'Αντίχειρας', 'Αστράγαλος', 'Καρδιά', 'Εγκέφαλος', 'Στομάχι', 'Στόμα', 'Δόντια', 'Γλώσσα', 'Μύτη', 'Αυτί', 'Μάτι', 'Πηγούνι', 'Μάγουλο', 'Λαιμός', 'Πλάτη', 'Πόδι', 'Πατούσα', 'Χέρι', 'Καρπός', 'Γοφός', 'Πνεύμονες', 'Δέρμα', 'Κόκαλο', 'Μυς', 'Φρύδι'],
+    clothes: ['Πουκάμισο', 'Παντελόνι', 'Φόρεμα', 'Φούστα', 'Σακάκι', 'Παλτό', 'Πουλόβερ', 'Κασκόλ', 'Γάντια', 'Καπέλο', 'Κάλτσες', 'Παπούτσια', 'Μπότες', 'Σανδάλια', 'Ζώνη', 'Γραβάτα', 'Τζιν', 'Σορτς', 'Πιτζάμες', 'Φούτερ', 'Μπλούζα', 'Γιλέκο', 'Τζόκεϊ', 'Στολή', 'Αδιάβροχο', 'Παντόφλες', 'Αθλητικά', 'Κοστούμι', 'Τσέπη', 'Κουμπί'],
+    jobs: ['Γιατρός', 'Νοσοκόμα', 'Δάσκαλος', 'Αγρότης', 'Φούρναρης', 'Σεφ', 'Πιλότος', 'Οδοντίατρος', 'Δικηγόρος', 'Μηχανικός', 'Καλλιτέχνης', 'Τραγουδιστής', 'Ηθοποιός', 'Σερβιτόρος', 'Οδηγός', 'Ζωγράφος', 'Υδραυλικός', 'Χασάπης', 'Ναύτης', 'Στρατιώτης', 'Αστυνομικός', 'Πυροσβέστης', 'Ταμίας', 'Τραπεζίτης', 'Συγγραφέας', 'Χορευτής', 'Δικαστής', 'Ράφτης', 'Κηπουρός', 'Ψαράς'],
+  },
+};
