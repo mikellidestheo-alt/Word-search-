@@ -54,8 +54,9 @@ h2 { font-size: 1.2rem; margin: 28px 0 10px; }
 }
 .ws-cell.sel { background: #ffe58a; }
 .ws-cell.found { color: #fff; }
-.ws-words { list-style: none; padding: 0; margin: 0; min-width: 180px; columns: 2; }
-.ws-words li { padding: 4px 0; font-weight: 600; letter-spacing: .5px; }
+.ws-side { flex: 1 1 340px; min-width: 0; }
+.ws-words { list-style: none; padding: 0; margin: 0; columns: 3; column-gap: 12px; }
+.ws-words li { padding: 4px 0; font-weight: 600; font-size: .9rem; letter-spacing: .3px; overflow-wrap: anywhere; }
 .ws-words li.found { text-decoration: line-through; color: #aaa; }
 .status { margin: 12px 0; font-weight: 600; min-height: 1.4em; }
 .status.win { color: #23784b; }

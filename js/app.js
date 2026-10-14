@@ -139,7 +139,7 @@
       <p class="sub">${t().wsHelp}</p>
       <div class="ws-layout">
         <div class="ws-grid" id="grid">${cells.join('')}</div>
-        <div>
+        <div class="ws-side">
           <ul class="ws-words" id="words">${p.words.map((w, i) => `<li data-i="${i}">${esc(w)}</li>`).join('')}</ul>
           <div class="status" id="status"></div>
           <div class="actions">

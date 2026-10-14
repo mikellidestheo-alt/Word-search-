@@ -24,6 +24,7 @@ const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
 
 // ---------- Word search ----------
 const SIZE = 12;
+const WORDS_PER_PUZZLE = 15;
 const ALPHA = { en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', el: 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ' };
 const ALL_DIRS = [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1]];
 const DIRS_BY_LEVEL = [ALL_DIRS.slice(0, 3), ALL_DIRS.slice(0, 3), ALL_DIRS.slice(0, 4), ALL_DIRS.slice(0, 6), ALL_DIRS];
@@ -90,7 +91,7 @@ for (const [li, lang] of ['en', 'el'].entries()) {
       const words = [];
       const rev = (w) => [...w].reverse().join('');
       const clash = (a, b) => a.includes(b) || b.includes(a) || a.includes(rev(b)) || b.includes(rev(a));
-      for (let k = 0; words.length < 10; k++) {
+      for (let k = 0; words.length < WORDS_PER_PUZZLE; k++) {
         const w = pool[(i * 6 + k) % pool.length];
         if (!words.some((x) => clash(x, w))) words.push(w);
       }
