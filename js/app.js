@@ -204,15 +204,30 @@
       }
     }
 
-    let start = null, end = null, anchor = null, dragging = false;
-    function showSel() {
-      grid.querySelectorAll('.sel').forEach((el) => el.classList.remove('sel'));
-      if (start && end) lineCells(start[0], start[1], end[0], end[1]).forEach(([r, col]) => cellEl(r, col).classList.add('sel'));
+    // Selection is forgiving: the line snaps to the nearest of the 8 directions
+    // from the first letter and to the nearest letter along it, so a wobbly
+    // finger still selects the intended word.
+    let start = null, end = null, anchor = null, pointerId = null, moved = false;
+    function showSel(cls) {
+      grid.querySelectorAll('.sel, .miss').forEach((el) => el.classList.remove('sel', 'miss'));
+      if (start && end) lineCells(start[0], start[1], end[0], end[1]).forEach(([r, col]) => cellEl(r, col).classList.add(cls || 'sel'));
     }
-    function cellAt(e) {
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || !el.classList.contains('ws-cell')) return null;
-      return [+el.dataset.r, +el.dataset.c];
+    // Position in cell units (fractional), measured from the grid's top-left.
+    function gridPoint(e) {
+      const rect = grid.getBoundingClientRect();
+      return [(e.clientY - rect.top) / (rect.height / size), (e.clientX - rect.left) / (rect.width / size)];
+    }
+    const clampCell = (v) => Math.min(size - 1, Math.max(0, Math.floor(v)));
+    function snapEnd(e) {
+      const [y, x] = gridPoint(e);
+      const dy = y - (start[0] + 0.5), dx = x - (start[1] + 0.5);
+      if (Math.hypot(dx, dy) < 0.6) return start;
+      const angle = Math.round(Math.atan2(dy, dx) / (Math.PI / 4));
+      const dr = Math.round(Math.sin(angle * Math.PI / 4)), dc = Math.round(Math.cos(angle * Math.PI / 4));
+      let steps = Math.round((dx * dc + dy * dr) / (dc * dc + dr * dr));
+      // Stay inside the grid.
+      while (steps > 0 && (start[0] + dr * steps < 0 || start[0] + dr * steps >= size || start[1] + dc * steps < 0 || start[1] + dc * steps >= size)) steps--;
+      return [start[0] + dr * steps, start[1] + dc * steps];
     }
     function tryWord() {
       const i = p.pos.findIndex(([r1, c1, r2, c2]) =>
@@ -221,38 +236,65 @@
       if (i >= 0 && !found.has(i)) {
         found.add(i);
         save();
+        return true;
       }
+      return i >= 0;
+    }
+    function finish() {
+      const hit = tryWord();
+      if (!hit) {
+        // Briefly show the attempted letters in red so it's clear the swipe registered.
+        showSel('miss');
+        const s0 = start, e0 = end;
+        setTimeout(() => { if (start === s0 && end === e0) { start = end = null; showSel(); } }, 450);
+      } else {
+        start = end = null;
+        showSel();
+      }
+      anchor = null;
+      paintFound();
     }
     grid.addEventListener('pointerdown', (e) => {
-      const cell = cellAt(e);
-      if (!cell) return;
+      if (pointerId !== null) return;
       e.preventDefault();
-      dragging = true;
-      start = anchor || cell;
-      end = cell;
+      const [y, x] = gridPoint(e);
+      pointerId = e.pointerId;
+      moved = false;
+      try { grid.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      start = [clampCell(y), clampCell(x)];
+      end = start;
       showSel();
     });
     grid.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      const cell = cellAt(e);
-      if (cell && straight(start, cell)) { end = cell; showSel(); }
+      if (e.pointerId !== pointerId) return;
+      const next = snapEnd(e);
+      if (next[0] !== start[0] || next[1] !== start[1]) moved = true;
+      if (next[0] !== end[0] || next[1] !== end[1]) { end = next; showSel(); }
     });
-    window.addEventListener('pointerup', function up() {
-      if (!document.body.contains(grid)) { window.removeEventListener('pointerup', up); return; }
-      if (!dragging) return;
-      dragging = false;
-      if (start[0] === end[0] && start[1] === end[1]) {
-        // single tap: set or clear the anchor for tap-tap selection
-        anchor = anchor ? null : start;
-        if (!anchor) { start = end = null; }
+    function release(e) {
+      if (e.pointerId !== pointerId) return;
+      pointerId = null;
+      if (e.type === 'pointerup') { const next = snapEnd(e); if (next[0] !== start[0] || next[1] !== start[1]) { end = next; moved = true; } }
+      if (moved) { finish(); return; }
+      // A tap without moving: tap the first letter, then tap the last letter.
+      if (anchor && (anchor[0] !== start[0] || anchor[1] !== start[1])) {
+        const tapped = start;
+        start = anchor;
+        end = straight(anchor, tapped) ? tapped : anchor;
+        if (end === anchor) { anchor = tapped; start = end = tapped; showSel(); return; }
+        finish();
+      } else if (anchor) {
+        anchor = start = end = null; // tapping the same letter again clears it
         showSel();
-        return;
+      } else {
+        anchor = start; // remembered until the next tap or swipe
+        showSel();
       }
-      tryWord();
-      anchor = start = end = null;
-      showSel();
-      paintFound();
-    });
+    }
+    grid.addEventListener('pointerup', release);
+    grid.addEventListener('pointercancel', release);
+    // If the browser loses track of the finger, finish the swipe so the grid never gets stuck.
+    grid.addEventListener('lostpointercapture', (e) => { if (e.pointerId === pointerId) release(e); });
     document.getElementById('restart').addEventListener('click', () => {
       if (!confirm(t().confirmRestart)) return;
       found.clear(); save(); paintFound();

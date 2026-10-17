@@ -61,6 +61,7 @@ h1 .level { font-size: .9rem; font-weight: 600; color: #2f6fed; border: 1px soli
   font-weight: 600; font-size: clamp(.8rem, calc(44vw / var(--n)), 1.3rem); cursor: pointer;
 }
 .ws-cell.sel { background: rgba(255, 213, 79, .6); border-radius: 50%; }
+.ws-cell.miss { background: rgba(229, 115, 115, .45); border-radius: 50%; }
 .ws-side { flex: 1 1 320px; min-width: 0; max-width: 560px; }
 .ws-words { list-style: none; padding: 0; margin: 0; columns: 3; column-gap: 12px; }
 .ws-words li { padding: 4px 0; font-weight: 600; font-size: .9rem; letter-spacing: .3px; overflow-wrap: anywhere; }
