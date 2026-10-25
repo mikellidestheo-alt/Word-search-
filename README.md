@@ -10,6 +10,8 @@ A simple browser game app (plain HTML/CSS/JS, no build step).
   12×12 → 15×15 with 15–18 words. Every puzzle has diagonal words that cross other words.
   Puzzles 3–5 also draw on an advanced vocabulary list (`adv` in `tools/words.js`) of longer, less
   common words — puzzle 5 uses only advanced words.
+  No word is used twice: every puzzle has its own words (1,500 English and 1,620 Greek words in total).
+  Extra word lists live in `more` and `advMore` in `tools/words.js`.
 - **Sudoku**: 100 puzzles (25 Easy, 25 Medium, 25 Hard, 25 Expert), each with a unique solution.
 - Progress is saved in the browser.
 

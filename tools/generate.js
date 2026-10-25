@@ -150,35 +150,78 @@ function buildWordSearch(words, L, alpha, rand) {
       }
     }
   }
-  throw new Error('Could not build word search for ' + words.join(','));
+  return null;
 }
 
 const wordsearch = [];
+const repeats = [];
 let seed;
 for (const [li, lang] of ['en', 'el'].entries()) {
+  // Each word belongs to one category only (the first it is listed in), so the
+  // same word never turns up in two different categories.
+  const claimed = new Set();
+  const own = (list) => [...new Set(list.map(norm))].filter((w) => !claimed.has(w) && claimed.add(w));
+  const lists = W.categories.map((cat) => ({
+    everyday: own([...W[lang][cat.id], ...W.more[lang][cat.id]]).filter((w) => w.length <= 12),
+    advanced: own([...W.adv[lang][cat.id], ...W.advMore[lang][cat.id]]),
+  }));
   for (const [ci, cat] of W.categories.entries()) {
     seed = ci < 10 ? 1000 + li * 60 + ci * 6 : 3000 + li * 1000 + ci * 6;
-    const pool = shuffle([...new Set(W[lang][cat.id].map(norm))].filter((w) => w.length <= 12), rng(seed++));
-    const advPool = shuffle([...new Set(W.adv[lang][cat.id].map(norm))], rng(seed + 7000));
+    // Shorter everyday words go to the easier puzzles, longer ones to the harder puzzles.
+    const pool = shuffle(lists[ci].everyday, rng(seed++)).sort((x, y) => x.length - y.length);
+    const advPool = shuffle(lists[ci].advanced, rng(seed + 7000));
+    // Words already used by an earlier puzzle in this category. Every puzzle
+    // gets fresh words, so finishing one puzzle never shows its words again.
+    const used = new Set();
     for (let i = 0; i < 5; i++) {
       const L = LEVELS[lang][i];
       const words = [];
       const rev = (w) => [...w].reverse().join('');
       const clash = (a, b) => a.includes(b) || b.includes(a) || a.includes(rev(b)) || b.includes(rev(a));
-      const take = (src, offset, count) => {
-        for (let k = 0, added = 0; added < count && k < src.length * 2; k++) {
-          const w = src[(offset + k) % src.length];
-          if (w.length <= L.size && !words.some((x) => clash(x, w))) { words.push(w); added++; }
+      const fits = (w) => w.length <= L.size && !words.includes(w) && !words.some((x) => clash(x, w));
+      const take = (src, count, allowUsed) => {
+        for (const w of src) {
+          if (count <= 0) break;
+          if ((allowUsed || !used.has(w)) && fits(w)) {
+            if (used.has(w)) repeats.push(`${lang}-${cat.id}-${i + 1}: ${w}`);
+            words.push(w); count--;
+          }
         }
       };
-      take(pool, i * 6, L.words - (L.adv || 0));
-      take(advPool, i === 4 ? 0 : (i - 2) * 7, L.words - words.length);
-      if (words.length < L.words) take(pool, i * 6, L.words - words.length);
-      const p = buildWordSearch(words, L, ALPHA[lang], rng(seed++));
+      take(pool, L.words - (L.adv || 0));
+      take(advPool, L.words - words.length);
+      take(pool, L.words - words.length); // only if the advanced list ran short
+      take([...advPool, ...pool], L.words - words.length, true); // last resort: reuse
+      // Keep the grid from getting too crowded: swap the longest word for a shorter
+      // unused one while the words would fill more than ~75% of the grid, or if the
+      // puzzle can't be built.
+      const rand = rng(seed++);
+      const letters = () => words.reduce((n, w) => n + w.length, 0);
+      const swapLongest = () => {
+        const longest = words.reduce((a, b) => (b.length > a.length ? b : a));
+        words.splice(words.indexOf(longest), 1);
+        const isAdv = advPool.includes(longest);
+        const options = [...(isAdv ? advPool : pool), ...(isAdv ? pool : advPool)]
+          .filter((w) => !used.has(w) && w.length < longest.length && fits(w));
+        words.push(options.length ? options.reduce((a, b) => (b.length > a.length ? b : a)) : longest);
+        return options.length > 0;
+      };
+      while (letters() > 0.75 * L.size * L.size && swapLongest());
+      // If it's still crowded (some categories only have long words), let the grid grow a little.
+      const G = { ...L };
+      while (letters() > 0.75 * G.size * G.size && G.size < L.size + 2) G.size++;
+      let p = buildWordSearch(words, G, ALPHA[lang], rand);
+      for (let tries = 0; !p && tries < 10; tries++) {
+        if (!swapLongest() && G.size < L.size + 2) G.size++;
+        p = buildWordSearch(words, G, ALPHA[lang], rand);
+      }
+      if (!p) throw new Error('Could not build word search for ' + words.join(','));
+      words.forEach((w) => used.add(w));
       wordsearch.push({ id: `${lang}-${cat.id}-${i + 1}`, lang, cat: cat.id, n: i + 1, ...p });
     }
   }
 }
+if (repeats.length) console.warn('Words reused because a category ran short:', repeats);
 
 // ---------- Sudoku ----------
 function candidates(b, i) {
