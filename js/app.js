@@ -68,15 +68,23 @@
   const done = store.get('done', {});
   const markDone = (id) => { done[id] = true; store.set('done', done); };
   const t = () => T[lang];
-  // Found words are saved as the words themselves ('wsf-'), so progress survives
-  // changes to a puzzle's word list. Older saves stored list positions ('ws-');
-  // those are only still valid for puzzles 1-2, whose word lists never changed.
+  // Found words are saved per puzzle together with a fingerprint of its grid
+  // ('wsp-'). If a puzzle is ever regenerated, its fingerprint changes and the
+  // old progress is ignored, so a new puzzle never opens with words already found.
+  const gridPrint = (p) => {
+    let h = 2166136261;
+    for (const ch of p.grid.join('')) h = Math.imul(h ^ ch.codePointAt(0), 16777619);
+    return (h >>> 0).toString(36);
+  };
   function wsFound(p) {
-    const saved = store.get('wsf-' + p.id, null);
-    if (saved) return new Set(saved.filter((w) => p.words.includes(w)));
-    const old = p.n <= 2 ? store.get('ws-' + p.id, []) : [];
-    return new Set(old.map((i) => p.words[i]).filter(Boolean));
+    const saved = store.get('wsp-' + p.id, null);
+    if (!saved || saved.g !== gridPrint(p) || !Array.isArray(saved.w)) return new Set();
+    return new Set(saved.w.filter((w) => p.words.includes(w)));
   }
+  // Remove progress saved by earlier versions of the app (puzzles have changed since).
+  try {
+    Object.keys(localStorage).filter((k) => k.startsWith('ws-') || k.startsWith('wsf-')).forEach((k) => localStorage.removeItem(k));
+  } catch (e) { /* ignore */ }
   const wsSolved = (p) => wsFound(p).size >= p.words.length;
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -144,9 +152,9 @@
     const p = wsList(catId).find((x) => x.n === n);
     if (!c || !p) return homePage();
     const size = p.grid.length;
-    const key = 'wsf-' + p.id;
+    const key = 'wsp-' + p.id;
     const found = new Set([...wsFound(p)].map((w) => p.words.indexOf(w)));
-    const save = () => store.set(key, [...found].map((i) => p.words[i]));
+    const save = () => store.set(key, { g: gridPrint(p), w: [...found].map((i) => p.words[i]) });
 
     const cells = [];
     for (let r = 0; r < size; r++) for (let col = 0; col < size; col++)
