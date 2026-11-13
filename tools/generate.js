@@ -33,21 +33,20 @@ const ALL_DIRS = [E, S, SE, NE, W_, N, NW, SW];
 //   size: grid width/height       words: words to find      dirs: allowed directions
 //   decoys: partial "near-miss" copies of words hidden in the grid
 //   tricky: filler letters drawn mostly from the puzzle's own words
-//   adv: how many words come from the advanced (longer, less common) vocabulary
 const LEVELS = {
   en: [
     { size: 12, words: 15, dirs: [E, S, SE], decoys: 0, tricky: false },
     { size: 12, words: 15, dirs: [E, S, SE, NE], decoys: 2, tricky: false },
-    { size: 12, words: 15, adv: 4, dirs: [E, S, SE, NE, W_], decoys: 4, tricky: false },
-    { size: 13, words: 15, adv: 8, dirs: [E, S, SE, NE, W_, N], decoys: 6, tricky: true },
-    { size: 14, words: 15, adv: 15, dirs: ALL_DIRS, decoys: 8, tricky: true },
+    { size: 12, words: 15, dirs: [E, S, SE, NE, W_], decoys: 4, tricky: false },
+    { size: 13, words: 15, dirs: [E, S, SE, NE, W_, N], decoys: 6, tricky: true },
+    { size: 14, words: 15, dirs: ALL_DIRS, decoys: 8, tricky: true },
   ],
   el: [
     { size: 12, words: 15, dirs: [E, S, SE, NE], decoys: 2, tricky: false },
     { size: 13, words: 15, dirs: [E, S, SE, NE, W_, N], decoys: 4, tricky: false },
-    { size: 13, words: 16, adv: 5, dirs: ALL_DIRS, decoys: 6, tricky: true },
-    { size: 14, words: 17, adv: 10, dirs: ALL_DIRS, decoys: 9, tricky: true },
-    { size: 15, words: 18, adv: 18, dirs: ALL_DIRS, decoys: 12, tricky: true },
+    { size: 13, words: 16, dirs: ALL_DIRS, decoys: 6, tricky: true },
+    { size: 14, words: 17, dirs: ALL_DIRS, decoys: 9, tricky: true },
+    { size: 15, words: 18, dirs: ALL_DIRS, decoys: 12, tricky: true },
   ],
 };
 const isDiag = ([dr, dc]) => dr !== 0 && dc !== 0;
@@ -155,73 +154,72 @@ function buildWordSearch(words, L, alpha, rand) {
 
 const wordsearch = [];
 const repeats = [];
+// Words from earlier rounds of puzzles are never used again.
+const RETIRED = require('./retired-words.json');
 let seed;
 for (const [li, lang] of ['en', 'el'].entries()) {
-  // Each word belongs to one category only (the first it is listed in), so the
-  // same word never turns up in two different categories.
-  const claimed = new Set();
-  const own = (list) => [...new Set(list.map(norm))].filter((w) => !claimed.has(w) && claimed.add(w));
-  const lists = W.categories.map((cat) => ({
-    everyday: own([...W[lang][cat.id], ...W.more[lang][cat.id]]).filter((w) => w.length <= 12),
-    advanced: own([...W.adv[lang][cat.id], ...W.advMore[lang][cat.id]]),
-  }));
+  // Each word belongs to one theme only (the first it is listed in), so the
+  // same word never turns up in two different themes.
+  const claimed = new Set(RETIRED[lang]);
+  const own = (list) => [...new Set(list.map(norm))]
+    .filter((w) => /^[A-ZΑ-Ω]+$/.test(w) && w.length <= 15 && !claimed.has(w) && claimed.add(w));
+  const lists = W.categories.map((cat) => own(W[lang][cat.id]));
   for (const [ci, cat] of W.categories.entries()) {
-    seed = ci < 10 ? 1000 + li * 60 + ci * 6 : 3000 + li * 1000 + ci * 6;
-    // Shorter everyday words go to the easier puzzles, longer ones to the harder puzzles.
-    const pool = shuffle(lists[ci].everyday, rng(seed++)).sort((x, y) => x.length - y.length);
-    const advPool = shuffle(lists[ci].advanced, rng(seed + 7000));
-    // Words already used by an earlier puzzle in this category. Every puzzle
+    seed = 20000 + li * 1000 + ci * 7;
+    // Shorter words go to the easier puzzles, longer ones to the harder puzzles.
+    const pool = shuffle(lists[ci], rng(seed++)).sort((x, y) => x.length - y.length);
+    // Words already used by an earlier puzzle in this theme. Every puzzle
     // gets fresh words, so finishing one puzzle never shows its words again.
     const used = new Set();
-    for (let i = 0; i < 5; i++) {
+    // The hard puzzles (5, 4, 3) pick first, from the longest words; the easy
+    // puzzles (1, 2) then take the shortest words left.
+    const built = [];
+    for (const i of [4, 3, 2, 0, 1]) {
       const L = LEVELS[lang][i];
       const words = [];
+      const hard = i >= 2;
+      // Room for the words: keep them to ~75% of a grid one size up from the level's.
+      const budget = 0.75 * (L.size + 1) * (L.size + 1);
+      const order = hard ? [...pool].reverse() : pool;
       const rev = (w) => [...w].reverse().join('');
       const clash = (a, b) => a.includes(b) || b.includes(a) || a.includes(rev(b)) || b.includes(rev(a));
-      const fits = (w) => w.length <= L.size && !words.includes(w) && !words.some((x) => clash(x, w));
-      const take = (src, count, allowUsed) => {
-        for (const w of src) {
-          if (count <= 0) break;
-          if ((allowUsed || !used.has(w)) && fits(w)) {
-            if (used.has(w)) repeats.push(`${lang}-${cat.id}-${i + 1}: ${w}`);
-            words.push(w); count--;
-          }
-        }
-      };
-      take(pool, L.words - (L.adv || 0));
-      take(advPool, L.words - words.length);
-      take(pool, L.words - words.length); // only if the advanced list ran short
-      take([...advPool, ...pool], L.words - words.length, true); // last resort: reuse
-      // Keep the grid from getting too crowded: swap the longest word for a shorter
-      // unused one while the words would fill more than ~75% of the grid, or if the
-      // puzzle can't be built.
+      const fits = (w) => w.length <= L.size + 2 && !words.includes(w) && !words.some((x) => clash(x, w));
+      const total = () => words.reduce((n, w) => n + w.length, 0);
+      for (const w of order) {
+        if (words.length >= L.words) break;
+        // Leave room for the rest of this puzzle's words (at least 4 letters each).
+        const room = budget - total() - (L.words - words.length - 1) * 4;
+        if (!used.has(w) && fits(w) && (!hard || w.length <= room)) words.push(w);
+      }
+      // If the room limit left the puzzle short, take any unused word; reusing a
+      // word is the very last resort (reported below).
+      for (const w of [...pool].reverse()) {
+        if (words.length >= L.words) break;
+        if (!used.has(w) && fits(w)) words.push(w);
+      }
+      for (const w of pool) {
+        if (words.length >= L.words) break;
+        if (fits(w)) { words.push(w); repeats.push(`${lang}-${cat.id}-${i + 1}: ${w}`); }
+      }
+      // Grids grow a little (at most 2) when the words would fill more than ~75% of it.
       const rand = rng(seed++);
-      const letters = () => words.reduce((n, w) => n + w.length, 0);
-      const swapLongest = () => {
-        const longest = words.reduce((a, b) => (b.length > a.length ? b : a));
-        words.splice(words.indexOf(longest), 1);
-        const isAdv = advPool.includes(longest);
-        const options = [...(isAdv ? advPool : pool), ...(isAdv ? pool : advPool)]
-          .filter((w) => !used.has(w) && w.length < longest.length && fits(w));
-        words.push(options.length ? options.reduce((a, b) => (b.length > a.length ? b : a)) : longest);
-        return options.length > 0;
-      };
-      while (letters() > 0.75 * L.size * L.size && swapLongest());
-      // If it's still crowded (some categories only have long words), let the grid grow a little.
+      const letters = words.reduce((n, w) => n + w.length, 0);
+      const longest = Math.max(...words.map((w) => w.length));
       const G = { ...L };
-      while (letters() > 0.75 * G.size * G.size && G.size < L.size + 2) G.size++;
+      while ((letters > 0.75 * G.size * G.size || longest > G.size) && G.size < L.size + 2) G.size++;
       let p = buildWordSearch(words, G, ALPHA[lang], rand);
-      for (let tries = 0; !p && tries < 10; tries++) {
-        if (!swapLongest() && G.size < L.size + 2) G.size++;
+      for (let tries = 0; !p && tries < 3; tries++) {
+        if (G.size < L.size + 2) G.size++;
         p = buildWordSearch(words, G, ALPHA[lang], rand);
       }
       if (!p) throw new Error('Could not build word search for ' + words.join(','));
       words.forEach((w) => used.add(w));
-      wordsearch.push({ id: `${lang}-${cat.id}-${i + 1}`, lang, cat: cat.id, n: i + 1, ...p });
+      built[i] = { id: `${lang}-${cat.id}-${i + 1}`, lang, cat: cat.id, n: i + 1, ...p };
     }
+    wordsearch.push(...built);
   }
 }
-if (repeats.length) console.warn('Words reused because a category ran short:', repeats);
+if (repeats.length) console.warn('Words reused because a theme ran short:', repeats);
 
 // ---------- Sudoku ----------
 function candidates(b, i) {
