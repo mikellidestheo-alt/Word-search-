@@ -7,7 +7,7 @@
     en: {
       brand: 'Word Search & Sudoku',
       welcome: 'Welcome!',
-      intro: 'Choose a language, pick a category and start playing. 100 word searches in each language and 100 sudoku puzzles.',
+      intro: (n) => `Choose a language, pick a category and start playing. ${n} hard word searches in each language and 100 sudoku puzzles.`,
       chooseLang: 'Choose your version',
       enVersion: 'English version', elVersion: 'Greek version',
       wsCount: (n) => `${n} word searches`,
@@ -25,15 +25,15 @@
       wsHelp: 'Drag across letters (or tap the first and last letter) to select a word.',
       sdHelp: 'Select a cell, then type or tap a number.',
       confirmRestart: 'Restart this puzzle?',
-      wsLevels: ['Easy', 'Fairly easy', 'Medium', 'Hard', 'Very hard'],
+      wsLevels: ['Hard', 'Hard', 'Very hard', 'Very hard'],
       dirsBasic: 'Words go across, down and diagonally.',
       dirsBack: 'Words go in every direction — also backwards and upwards.',
-      ladder: 'Puzzles get harder from 1 to 5.',
+      ladder: 'Each theme has two hard and two very hard puzzles.',
     },
     el: {
       brand: 'Κρυπτόλεξα & Sudoku',
       welcome: 'Καλώς ήρθατε!',
-      intro: 'Διαλέξτε γλώσσα, μια κατηγορία και ξεκινήστε. 100 κρυπτόλεξα σε κάθε γλώσσα και 100 sudoku.',
+      intro: (n) => `Διαλέξτε γλώσσα, μια κατηγορία και ξεκινήστε. ${n} δύσκολα κρυπτόλεξα σε κάθε γλώσσα και 100 sudoku.`,
       chooseLang: 'Διαλέξτε έκδοση',
       enVersion: 'Αγγλική έκδοση', elVersion: 'Ελληνική έκδοση',
       wsCount: (n) => `${n} κρυπτόλεξα`,
@@ -51,10 +51,10 @@
       wsHelp: 'Σύρετε πάνω στα γράμματα (ή πατήστε το πρώτο και το τελευταίο γράμμα) για να επιλέξετε λέξη.',
       sdHelp: 'Επιλέξτε ένα κελί και πληκτρολογήστε ή πατήστε έναν αριθμό.',
       confirmRestart: 'Να ξεκινήσει ο γρίφος από την αρχή;',
-      wsLevels: ['Εύκολο', 'Σχετικά εύκολο', 'Μέτριο', 'Δύσκολο', 'Πολύ δύσκολο'],
+      wsLevels: ['Δύσκολο', 'Δύσκολο', 'Πολύ δύσκολο', 'Πολύ δύσκολο'],
       dirsBasic: 'Οι λέξεις είναι οριζόντια, κάθετα και διαγώνια.',
       dirsBack: 'Οι λέξεις είναι προς κάθε κατεύθυνση — και ανάποδα ή προς τα πάνω.',
-      ladder: 'Οι γρίφοι γίνονται πιο δύσκολοι από το 1 έως το 5.',
+      ladder: 'Κάθε κατηγορία έχει δύο δύσκολους και δύο πολύ δύσκολους γρίφους.',
     },
   };
 
@@ -120,7 +120,7 @@
     const count = (l) => DATA.wordsearch.filter((p) => p.lang === l).length;
     app.innerHTML = `
       <h1>${t().welcome}</h1>
-      <p class="sub">${t().intro}</p>
+      <p class="sub">${t().intro(count(lang))}</p>
       <h2>${t().chooseLang}</h2>
       <div class="cards">
         <button class="card big${lang === 'en' ? ' done' : ''}" data-pick="en" type="button" style="text-align:left">
@@ -159,7 +159,7 @@
     const cells = [];
     for (let r = 0; r < size; r++) for (let col = 0; col < size; col++)
       cells.push(`<div class="ws-cell" data-r="${r}" data-c="${col}">${p.grid[r][col]}</div>`);
-    const nextN = n < 5 ? n + 1 : null;
+    const nextN = n < wsList(catId).length ? n + 1 : null;
     const longWords = Math.max(...p.words.map((w) => w.length)) > 10;
     const backwards = p.pos.some(([r1, c1, r2, c2]) => c2 < c1 || (c2 === c1 && r2 < r1));
 

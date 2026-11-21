@@ -1,4 +1,4 @@
-// Generates js/data.js with 200 word searches (100 English + 100 Greek)
+// Generates js/data.js with the word searches (hard + very hard) and 100 sudoku puzzles.
 // and 100 sudoku puzzles. Run with: node tools/generate.js
 const fs = require('fs');
 const path = require('path');
@@ -28,25 +28,23 @@ const ALPHA = { en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', el: 'ΑΒΓΔΕΖΗΘΙΚΛΜ�
 const E = [0, 1], S = [1, 0], SE = [1, 1], NE = [-1, 1], W_ = [0, -1], N = [-1, 0], NW = [-1, -1], SW = [1, -1];
 const ALL_DIRS = [E, S, SE, NE, W_, N, NW, SW];
 
-// Difficulty ladder for puzzles 1-5 of every category. English is the player's
-// second language, so it starts gentler; Greek (first language) climbs higher.
+// Round 3 has only hard and very hard puzzles: 2 hard + 2 very hard per theme.
+// Greek is the player's first language, so its puzzles are bigger and have more words.
 //   size: grid width/height       words: words to find      dirs: allowed directions
 //   decoys: partial "near-miss" copies of words hidden in the grid
 //   tricky: filler letters drawn mostly from the puzzle's own words
 const LEVELS = {
   en: [
-    { size: 12, words: 15, dirs: [E, S, SE], decoys: 0, tricky: false },
-    { size: 12, words: 15, dirs: [E, S, SE, NE], decoys: 2, tricky: false },
-    { size: 12, words: 15, dirs: [E, S, SE, NE, W_], decoys: 4, tricky: false },
     { size: 13, words: 15, dirs: [E, S, SE, NE, W_, N], decoys: 6, tricky: true },
-    { size: 14, words: 15, dirs: ALL_DIRS, decoys: 8, tricky: true },
+    { size: 13, words: 15, dirs: ALL_DIRS, decoys: 8, tricky: true },
+    { size: 14, words: 16, dirs: ALL_DIRS, decoys: 10, tricky: true },
+    { size: 15, words: 16, dirs: ALL_DIRS, decoys: 12, tricky: true },
   ],
   el: [
-    { size: 12, words: 15, dirs: [E, S, SE, NE], decoys: 2, tricky: false },
-    { size: 13, words: 15, dirs: [E, S, SE, NE, W_, N], decoys: 4, tricky: false },
-    { size: 13, words: 16, dirs: ALL_DIRS, decoys: 6, tricky: true },
-    { size: 14, words: 17, dirs: ALL_DIRS, decoys: 9, tricky: true },
+    { size: 14, words: 16, dirs: ALL_DIRS, decoys: 9, tricky: true },
+    { size: 14, words: 17, dirs: ALL_DIRS, decoys: 10, tricky: true },
     { size: 15, words: 18, dirs: ALL_DIRS, decoys: 12, tricky: true },
+    { size: 16, words: 18, dirs: ALL_DIRS, decoys: 14, tricky: true },
   ],
 };
 const isDiag = ([dr, dc]) => dr !== 0 && dc !== 0;
@@ -153,57 +151,51 @@ function buildWordSearch(words, L, alpha, rand) {
 }
 
 const wordsearch = [];
-const repeats = [];
-// Words from earlier rounds of puzzles are never used again.
+const MIN_LEN = 5; // no short words: every word is at least 5 letters
+// Words from earlier rounds are never used again, and obscure/awkward words are blocked.
 const RETIRED = require('./retired-words.json');
+const BLOCKED = require('./blocked-words.json');
 let seed;
 for (const [li, lang] of ['en', 'el'].entries()) {
-  // Each word belongs to one theme only (the first it is listed in), so the
-  // same word never turns up in two different themes.
-  const claimed = new Set(RETIRED[lang]);
+  // Each word belongs to one theme only (the first it is listed in).
+  const claimed = new Set([...RETIRED[lang], ...BLOCKED[lang]]);
   const own = (list) => [...new Set(list.map(norm))]
-    .filter((w) => /^[A-ZΑ-Ω]+$/.test(w) && w.length <= 15 && !claimed.has(w) && claimed.add(w));
+    .filter((w) => /^[A-ZΑ-Ω]+$/.test(w) && w.length >= MIN_LEN && w.length <= 16 && !claimed.has(w) && claimed.add(w));
   const lists = W.categories.map((cat) => own(W[lang][cat.id]));
   for (const [ci, cat] of W.categories.entries()) {
-    seed = 20000 + li * 1000 + ci * 7;
-    // Shorter words go to the easier puzzles, longer ones to the harder puzzles.
-    const pool = shuffle(lists[ci], rng(seed++)).sort((x, y) => x.length - y.length);
-    // Words already used by an earlier puzzle in this theme. Every puzzle
-    // gets fresh words, so finishing one puzzle never shows its words again.
+    seed = 40000 + li * 1000 + ci * 7;
+    // Longest words first: the very hard puzzles pick first, then the hard ones.
+    const pool = shuffle(lists[ci], rng(seed++)).sort((x, y) => y.length - x.length);
+    // If a theme has few good words, every puzzle gets a few fewer words (never fewer than 12).
+    const targets = LEVELS[lang].map((L) => L.words);
+    const total = targets.reduce((a, b) => a + b, 0);
+    const scale = Math.min(1, pool.length / (total + 3));
     const used = new Set();
-    // The hard puzzles (5, 4, 3) pick first, from the longest words; the easy
-    // puzzles (1, 2) then take the shortest words left.
     const built = [];
-    for (const i of [4, 3, 2, 0, 1]) {
+    for (const i of [3, 2, 1, 0]) {
       const L = LEVELS[lang][i];
+      const want = Math.max(12, Math.floor(L.words * scale));
       const words = [];
-      const hard = i >= 2;
-      // Room for the words: keep them to ~75% of a grid one size up from the level's.
-      const budget = 0.75 * (L.size + 1) * (L.size + 1);
-      const order = hard ? [...pool].reverse() : pool;
       const rev = (w) => [...w].reverse().join('');
       const clash = (a, b) => a.includes(b) || b.includes(a) || a.includes(rev(b)) || b.includes(rev(a));
       const fits = (w) => w.length <= L.size + 2 && !words.includes(w) && !words.some((x) => clash(x, w));
+      // Keep the words to ~75% of a grid one size up; leave room for the rest (>= 5 letters each).
+      const budget = 0.75 * (L.size + 1) * (L.size + 1);
       const total = () => words.reduce((n, w) => n + w.length, 0);
-      for (const w of order) {
-        if (words.length >= L.words) break;
-        // Leave room for the rest of this puzzle's words (at least 4 letters each).
-        const room = budget - total() - (L.words - words.length - 1) * 4;
-        if (!used.has(w) && fits(w) && (!hard || w.length <= room)) words.push(w);
+      for (const w of pool) {
+        if (words.length >= want) break;
+        const room = budget - total() - (want - words.length - 1) * MIN_LEN;
+        if (!used.has(w) && fits(w) && w.length <= room) words.push(w);
       }
-      // If the room limit left the puzzle short, take any unused word; reusing a
-      // word is the very last resort (reported below).
+      // If the room limit left it short, take the shortest unused words that fit.
       for (const w of [...pool].reverse()) {
-        if (words.length >= L.words) break;
+        if (words.length >= want) break;
         if (!used.has(w) && fits(w)) words.push(w);
       }
-      for (const w of pool) {
-        if (words.length >= L.words) break;
-        if (fits(w)) { words.push(w); repeats.push(`${lang}-${cat.id}-${i + 1}: ${w}`); }
-      }
+      if (words.length < 12) throw new Error(`Theme ${cat.id} (${lang}) has too few words: ${words.length}`);
       // Grids grow a little (at most 2) when the words would fill more than ~75% of it.
       const rand = rng(seed++);
-      const letters = words.reduce((n, w) => n + w.length, 0);
+      const letters = total();
       const longest = Math.max(...words.map((w) => w.length));
       const G = { ...L };
       while ((letters > 0.75 * G.size * G.size || longest > G.size) && G.size < L.size + 2) G.size++;
@@ -219,7 +211,6 @@ for (const [li, lang] of ['en', 'el'].entries()) {
     wordsearch.push(...built);
   }
 }
-if (repeats.length) console.warn('Words reused because a theme ran short:', repeats);
 
 // ---------- Sudoku ----------
 function candidates(b, i) {
